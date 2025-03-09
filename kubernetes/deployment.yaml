@@ -1,0 +1,291 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: license-system
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: license-system-secrets
+  namespace: license-system
+type: Opaque
+data:
+  POSTGRES_USER: cG9zdGdyZXM=  # postgres (base64)
+  POSTGRES_PASSWORD: cG9zdGdyZXM=  # postgres (base64)
+  CLIENT_DB_USER: cG9zdGdyZXM=  # postgres (base64)
+  CLIENT_DB_PASSWORD: bmVzdC1jcnVkLTIwMDU=  # nest-crud-2005 (base64)
+  SECRET_KEY: Y2hhbmdlbWVfdG9fc29tZXRoaW5nX3NlY3VyZQ==  # changeme_to_something_secure (base64)
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: license-system-config
+  namespace: license-system
+data:
+  API_V1_STR: "/api/v1"
+  PROJECT_NAME: "Sistema de Licencias"
+  ALGORITHM: "HS256"
+  ACCESS_TOKEN_EXPIRE_MINUTES: "11520"
+  POSTGRES_DB: "license_db"
+  POSTGRES_PORT: "5432"
+  CLIENT_DB_PORT: "5432"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: license-api
+  namespace: license-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: license-api
+  template:
+    metadata:
+      labels:
+        app: license-api
+    spec:
+      containers:
+      - name: license-api
+        image: license-api:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+        env:
+        - name: API_V1_STR
+          valueFrom:
+            configMapKeyRef:
+              name: license-system-config
+              key: API_V1_STR
+        - name: PROJECT_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: license-system-config
+              key: PROJECT_NAME
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: license-system-secrets
+              key: SECRET_KEY
+        - name: ALGORITHM
+          valueFrom:
+            configMapKeyRef:
+              name: license-system-config
+              key: ALGORITHM
+        - name: ACCESS_TOKEN_EXPIRE_MINUTES
+          valueFrom:
+            configMapKeyRef:
+              name: license-system-config
+              key: ACCESS_TOKEN_EXPIRE_MINUTES
+        - name: POSTGRES_SERVER
+          value: license-db-service
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: license-system-secrets
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: license-system-secrets
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: license-system-config
+              key: POSTGRES_DB
+        - name: POSTGRES_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: license-system-config
+              key: POSTGRES_PORT
+        - name: CLIENT_DB_SERVER
+          value: client-db-service
+        - name: CLIENT_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: license-system-secrets
+              key: CLIENT_DB_USER
+        - name: CLIENT_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: license-system-secrets
+              key: CLIENT_DB_PASSWORD
+        - name: CLIENT_DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: license-system-config
+              key: CLIENT_DB_PORT
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: license-api-service
+  namespace: license-system
+spec:
+  selector:
+    app: license-api
+  ports:
+  - port: 80
+    targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: license-db
+  namespace: license-system
+spec:
+  serviceName: license-db-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: license-db
+  template:
+    metadata:
+      labels:
+        app: license-db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: license-system-secrets
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: license-system-secrets
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: license-system-config
+              key: POSTGRES_DB
+        volumeMounts:
+        - name: license-db-data
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: license-db-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: license-db-service
+  namespace: license-system
+spec:
+  selector:
+    app: license-db
+  ports:
+  - port: 5432
+    targetPort: 5432
+  clusterIP: None
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: client-db
+  namespace: license-system
+spec:
+  serviceName: client-db-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: client-db
+  template:
+    metadata:
+      labels:
+        app: client-db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: license-system-secrets
+              key: CLIENT_DB_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: license-system-secrets
+              key: CLIENT_DB_PASSWORD
+        - name: POSTGRES_DB
+          value: postgres
+        volumeMounts:
+        - name: client-db-data
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: client-db-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: client-db-service
+  namespace: license-system
+spec:
+  selector:
+    app: client-db
+  ports:
+  - port: 5432
+    targetPort: 5432
+  clusterIP: None
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: license-api-ingress
+  namespace: license-system
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: license-api.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: license-api-service
+            port:
+              number: 80

@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: license_api
+    volumes:
+      - ./app:/app/app
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_SERVER=db
+      - POSTGRES_PORT=5432
+      - CLIENT_DB_SERVER=client-db
+      - CLIENT_DB_PORT=5432
+    depends_on:
+      - db
+      - client-db
+    restart: always
+
+  db:
+    image: postgres:15
+    container_name: license_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=license_db
+    ports:
+      - "5434:5432"
+    restart: always
+
+  client-db:
+    image: postgres:15
+    container_name: client_db
+    volumes:
+      - client_postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=nest-crud-2005
+      - POSTGRES_DB=postgres
+    ports:
+      - "5432:5432"
+    restart: always
+
+volumes:
+  postgres_data:
+  client_postgres_data:
