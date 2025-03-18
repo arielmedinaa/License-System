@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-connection-config
+data:
+  DATABASE_URL: "postgresql+asyncpg://postgres:postgres@license-db:5432/license_db?ssl=false"
+  CLIENT_DATABASE_URL: "postgresql+asyncpg://postgres:nest-crud-2005@client-db:5432/postgres?ssl=false"

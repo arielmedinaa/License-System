@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: license-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: license-api
+  template:
+    metadata:
+      labels:
+        app: license-api
+    spec:
+      initContainers:
+      - name: wait-for-dbs
+        image: postgres:15
+        command: ['sh', '-c', 
+          'until pg_isready -h license-db -p 5432; do echo waiting for license-db; sleep 2; done; 
+           until pg_isready -h client-db -p 5432; do echo waiting for client-db; sleep 2; done;']
+      containers:
+        - name: license-api
+          image: license-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: POSTGRES_SERVER
+              value: "license-db"
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "postgres"
+            - name: POSTGRES_DB
+              value: "license_db"
+            - name: CLIENT_DB_SERVER
+              value: "client-db"
+            - name: CLIENT_DB_PORT
+              value: "5432"
+            - name: CLIENT_DB_USER
+              value: "postgres"
+            - name: CLIENT_DB_PASSWORD
+              value: "nest-crud-2005"
+            - name: CLIENT_DB_NAME
+              value: "postgres"
+            - name: SQLALCHEMY_DATABASE_URI
+              value: "postgresql+asyncpg://postgres:postgres@license-db:5432/license_db"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: license-api
+spec:
+  type: ClusterIP
+  selector:
+    app: license-api
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
