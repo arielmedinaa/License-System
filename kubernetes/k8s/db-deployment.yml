@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: license-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: license-db
+  template:
+    metadata:
+      labels:
+        app: license-db
+    spec:
+      containers:
+        - name: license-db
+          image: postgres:15
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "postgres"
+            - name: POSTGRES_DB
+              value: "license_db"
+          volumeMounts:
+            - name: db-storage
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: db-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: license-db
+spec:
+  type: ClusterIP
+  selector:
+    app: license-db
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432

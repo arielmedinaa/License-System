@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: client-db
+  template:
+    metadata:
+      labels:
+        app: client-db
+    spec:
+      containers:
+        - name: client-db
+          image: postgres:15
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "nest-crud-2005"
+            - name: POSTGRES_DB
+              value: "postgres"
+          volumeMounts:
+            - name: client-db-storage
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: client-db-storage
+          persistentVolumeClaim:
+            claimName: client-postgres-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: client-db
+spec:
+  type: ClusterIP
+  selector:
+    app: client-db
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
