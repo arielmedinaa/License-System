@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from passlib.context import CryptContext
 
+from app.errors.exceptions_manage import sneaky_throws
 from app.models.license import License
 from app.schemas.license import LicenseCreate, LicenseUpdate
 from app.db.db_manager import client_db_manager
@@ -14,6 +15,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
+@sneaky_throws()
 async def create(db: AsyncSession, *, obj_in: LicenseCreate) -> License:
     db_info = await client_db_manager.create_client_database(
         ruc=obj_in.ruc,
