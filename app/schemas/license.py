@@ -11,7 +11,6 @@ class LicenseBase(BaseModel):
     mail: EmailStr
     tipo: ClientType
     licencia: LicenseType
-    
     ip: Optional[str] = "localhost"
     port: Optional[str] = "5432"
     is_active: Optional[bool] = True

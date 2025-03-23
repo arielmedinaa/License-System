@@ -68,6 +68,19 @@ async def get_by_ruc(db: AsyncSession, ruc: str) -> Optional[License]:
     result = await db.execute(select(License).where(License.ruc == ruc))
     return result.scalars().first()
 
+async def get_by_email_and_password(db: AsyncSession, email: str, password: str) -> Optional[License]:
+    result = await db.execute(
+        select(License).where(License.mail == email)
+    )
+    user = result.scalars().first()
+    if user and verify_password(password, user.password_user):
+        return user
+    
+    return None
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
+
 async def get_by_email(db: AsyncSession, email: str) -> Optional[License]:
     result = await db.execute(select(License).where(License.mail == email))
     return result.scalars().first()

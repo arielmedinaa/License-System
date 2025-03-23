@@ -7,5 +7,6 @@ from app.crud.license import (
     update,
     remove,
     deactivate,
-    get_active_licenses
+    get_active_licenses,
+    get_by_email_and_password,
 )

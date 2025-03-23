@@ -1,7 +1,7 @@
 from datetime import timezone
 import uuid
 from typing import Any, List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import crud
@@ -167,49 +167,27 @@ async def deactivate_license(
     license = await crud.deactivate(db, id=license_id)
     return license
 
-@router.get("/validate/{ruc}", response_model=dict)
+@router.post("/validate", response_model=LicenseResponse)
 async def validate_license(
     *,
     db: AsyncSession = Depends(get_db),
-    ruc: str
+    data: dict = Body(...)
 ) -> Any:
-    """
-    Valida una licencia por RUC y retorna su estado.
-    """
-    license = await crud.get_by_ruc(db, ruc=ruc)
-    
+    email = data.get("email")
+    password = data.get("password")
+
+    if not email or not password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email y password son requeridos"
+        )
+
+    license = await crud.get_by_email_and_password(db, email=email, password=password)
+
     if not license:
-        return {
-            "valid": False,
-            "message": "No se encontró licencia para este RUC"
-        }
-    
-    from datetime import datetime
-    now = datetime.now(timezone.utc).replace(tzinfo=None)
-    
-    if not license.is_active:
-        return {
-            "valid": False,
-            "message": "La licencia no está activa"
-        }
-    
-    if license.expiration_date < now:
-        return {
-            "valid": False,
-            "message": "La licencia ha expirado"
-        }
-    
-    return {
-        "valid": True,
-        "license_id": str(license.id),
-        "ruc": license.ruc,
-        "nombre": license.nombre,
-        "tipo": license.tipo.value,
-        "licencia": license.licencia.value,
-        "database_info": {
-            "database_name": license.database_name,
-            "ip": license.ip,
-            "port": license.port
-        },
-        "expiration_date": license.expiration_date.isoformat()
-    }
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Credenciales inválidas"
+        )
+
+    return license

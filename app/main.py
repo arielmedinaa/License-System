@@ -4,9 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
 from app.core.config import settings
-from app.core.database import Base, engine  # Importar Base y engine
+from app.core.database import Base, engine
 
-# Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -25,7 +24,6 @@ if settings.BACKEND_CORS_ORIGINS:
         allow_headers=["*"],
     )
 
-# Incluir API router
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.on_event("startup")
@@ -37,7 +35,6 @@ async def startup():
 
 @app.on_event("shutdown")
 async def shutdown():
-    # Cerrar conexiones a la base de datos
     await engine.dispose()
     logger.info("Conexiones a base de datos cerradas")
 
