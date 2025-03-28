@@ -9,4 +9,5 @@ from app.crud.license import (
     deactivate,
     get_active_licenses,
     get_by_email_and_password,
+    create_access_token,
 )

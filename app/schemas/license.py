@@ -68,6 +68,20 @@ class LicenseResponse(LicenseBase):
     created_at: datetime
     updated_at: datetime
     expiration_date: datetime
+    access_token: Optional[str] = None
+    token_type: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+        
+class UserInfo(BaseModel):
+    id: uuid.UUID
+    email: EmailStr
+
+class TokenLicenseResponse(BaseModel):
+    access_token: str
+    token_type: str
+    user: UserInfo
 
     class Config:
         from_attributes = True

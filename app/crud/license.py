@@ -1,6 +1,7 @@
 import uuid
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timedelta
+import jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from passlib.context import CryptContext
@@ -9,6 +10,7 @@ from app.errors.exceptions_manage import sneaky_throws
 from app.models.license import License
 from app.schemas.license import LicenseCreate, LicenseUpdate
 from app.db.db_manager import client_db_manager
+from app.core.config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -77,6 +79,46 @@ async def get_by_email_and_password(db: AsyncSession, email: str, password: str)
         return user
     
     return None
+
+def create_access_token(data: Dict[str, Any]) -> str:
+    to_encode = data.copy()
+    
+    if settings.ACCESS_TOKEN_EXPIRE_MINUTES > 0:
+        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        to_encode.update({"exp": expire})
+    
+    encoded_jwt = jwt.encode(
+        to_encode, 
+        settings.SECRET_KEY, 
+        algorithm=settings.ALGORITHM
+    )
+    return encoded_jwt
+
+async def authenticate_user_and_get_token(db: AsyncSession, email: str, password: str) -> Optional[Dict[str, Any]]:
+    user = await get_by_email_and_password(db, email, password)
+    
+    if not user:
+        return None
+    
+    token_data = {
+        "sub": str(user.id),
+        "email": user.mail,
+        "license_id": str(user.license_id) if hasattr(user, 'license_id') else None,
+        "license_type": user.license_type if hasattr(user, 'license_type') else None,
+    }
+    
+    access_token = create_access_token(token_data)
+    
+    user_data = {
+        "id": user.id,
+        "email": user.mail,
+    }
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": user_data
+    }
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)

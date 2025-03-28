@@ -5,7 +5,8 @@ from fastapi import APIRouter, Body, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import crud
-from app.schemas.license import LicenseCreate, LicenseUpdate, LicenseResponse
+from app.crud.license import create_access_token
+from app.schemas.license import LicenseCreate, LicenseUpdate, LicenseResponse, TokenLicenseResponse
 from app.core.database import get_db
 
 router = APIRouter()
@@ -45,9 +46,6 @@ async def read_licenses(
     skip: int = 0,
     limit: int = 100
 ) -> Any:
-    """
-    Obtiene todas las licencias.
-    """
     licenses = await crud.get_multi(db, skip=skip, limit=limit)
     return licenses
 
@@ -55,9 +53,6 @@ async def read_licenses(
 async def read_active_licenses(
     db: AsyncSession = Depends(get_db)
 ) -> Any:
-    """
-    Obtiene todas las licencias activas.
-    """
     licenses = await crud.get_active_licenses(db)
     return licenses
 
@@ -67,9 +62,6 @@ async def read_license(
     db: AsyncSession = Depends(get_db),
     license_id: uuid.UUID
 ) -> Any:
-    """
-    Obtiene una licencia por ID.
-    """
     license = await crud.get(db, id=license_id)
     if not license:
         raise HTTPException(
@@ -84,9 +76,6 @@ async def read_license_by_ruc(
     db: AsyncSession = Depends(get_db),
     ruc: str
 ) -> Any:
-    """
-    Obtiene una licencia por RUC.
-    """
     license = await crud.get_by_ruc(db, ruc=ruc)
     if not license:
         raise HTTPException(
@@ -102,9 +91,6 @@ async def update_license(
     license_id: uuid.UUID,
     license_in: LicenseUpdate
 ) -> Any:
-    """
-    Actualiza una licencia.
-    """
     license = await crud.get(db, id=license_id)
     if not license:
         raise HTTPException(
@@ -129,9 +115,6 @@ async def delete_license(
     db: AsyncSession = Depends(get_db),
     license_id: uuid.UUID
 ) -> Any:
-    """
-    Elimina una licencia.
-    """
     license = await crud.get(db, id=license_id)
     if not license:
         raise HTTPException(
@@ -148,9 +131,6 @@ async def deactivate_license(
     db: AsyncSession = Depends(get_db),
     license_id: uuid.UUID
 ) -> Any:
-    """
-    Desactiva una licencia.
-    """
     license = await crud.get(db, id=license_id)
     if not license:
         raise HTTPException(
@@ -189,5 +169,20 @@ async def validate_license(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenciales inválidas"
         )
+
+    token_data = {
+        "sub": str(license.id),
+        "email": license.mail,
+        "license_id": str(license.id),
+        "license_type": license.licencia.value if hasattr(license.licencia, 'value') else license.licencia,
+        "database_name": license.database_name,
+        "db_host": license.ip,
+        "db_port": "15432",
+        "db_password": license.pass_database
+    }
+    
+    access_token = create_access_token(token_data)    
+    setattr(license, "access_token", access_token)
+    setattr(license, "token_type", "bearer")
 
     return license

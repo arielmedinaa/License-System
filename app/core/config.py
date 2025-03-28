@@ -6,12 +6,10 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "Sistema de Licencias"
     
-    # JWT
-    SECRET_KEY: str = "your-secret-key-please-change-in-production"
+    SECRET_KEY: str = "alquetodosenelbarriollamanelsenseivossabeis"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = -1
     
-    # CORS
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
 
     @field_validator("BACKEND_CORS_ORIGINS")
