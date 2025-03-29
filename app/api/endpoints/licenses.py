@@ -3,7 +3,6 @@ import uuid
 from typing import Any, List
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from app import crud
 from app.crud.license import create_access_token
 from app.schemas.license import LicenseCreate, LicenseUpdate, LicenseResponse, TokenLicenseResponse
@@ -18,6 +17,7 @@ async def create_license(
     license_in: LicenseCreate
 ) -> Any:
     existing_ruc = await crud.get_by_ruc(db, ruc=license_in.ruc)
+    print(LicenseResponse)
     if existing_ruc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

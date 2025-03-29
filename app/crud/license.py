@@ -23,6 +23,7 @@ async def create(db: AsyncSession, *, obj_in: LicenseCreate) -> License:
         ruc=obj_in.ruc,
         client_type=obj_in.tipo.value
     )
+    print(obj_in)
     
     license_data = obj_in.dict(exclude={"password"})
     license_data["password_user"] = get_password_hash(obj_in.password)
