@@ -10,23 +10,23 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = -1
     
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
+    BACKEND_CORS_ORIGINS: str = "*"
 
-    @field_validator("BACKEND_CORS_ORIGINS")
-    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
-        elif isinstance(v, (list, str)):
-            return v
-        raise ValueError(v)
+    # @field_validator("BACKEND_CORS_ORIGINS")
+    # def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
+    #     if isinstance(v, str) and not v.startswith("["):
+    #         return [i.strip() for i in v.split(",")]
+    #     elif isinstance(v, (list, str)):
+    #         return v
+    #     raise ValueError(v)
 
-    POSTGRES_SERVER: str = "db"
+    POSTGRES_SERVER: str = "localhost"
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "postgres"
     POSTGRES_DB: str = "license_db"
-    POSTGRES_PORT: int = 5432
+    POSTGRES_PORT: int = 5434
     
-    SQLALCHEMY_DATABASE_URI: str = "postgresql+asyncpg://postgres:postgres@db:5432/license_db"
+    SQLALCHEMY_DATABASE_URI: str = "postgresql+asyncpg://postgres:postgres@localhost:5434/license_db"
     
     CLIENT_DB_SERVER: str = "client-db"
     CLIENT_DB_USER: str = "postgres"

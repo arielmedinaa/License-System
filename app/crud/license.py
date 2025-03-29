@@ -5,7 +5,6 @@ import jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from passlib.context import CryptContext
-
 from app.errors.exceptions_manage import sneaky_throws
 from app.models.license import License
 from app.schemas.license import LicenseCreate, LicenseUpdate
@@ -23,11 +22,9 @@ async def create(db: AsyncSession, *, obj_in: LicenseCreate) -> License:
         ruc=obj_in.ruc,
         client_type=obj_in.tipo.value
     )
-    print(obj_in)
     
     license_data = obj_in.dict(exclude={"password"})
     license_data["password_user"] = get_password_hash(obj_in.password)
-    
     license_data["database_name"] = db_info["database_name"]
     license_data["pass_database"] = db_info["pass_database"]
     
