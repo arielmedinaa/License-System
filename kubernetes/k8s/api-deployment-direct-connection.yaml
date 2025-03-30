@@ -20,8 +20,8 @@ spec:
            until pg_isready -h client-db -p 5432; do echo waiting for client-db; sleep 2; done;']
       containers:
         - name: license-api
-          image: license-api:latest
-          imagePullPolicy: IfNotPresent
+          image: arielmedin/license-api:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8000
           env:

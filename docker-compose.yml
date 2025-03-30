@@ -1,24 +1,24 @@
-version: '3.8'
+# version: '3.8'
 
 services:
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: license_api
-    volumes:
-      - ./app:/app/app
-    ports:
-      - "8000:8000"
-    environment:
-      - POSTGRES_SERVER=db
-      - POSTGRES_PORT=5432
-      - CLIENT_DB_SERVER=client-db
-      - CLIENT_DB_PORT=5432
-    depends_on:
-      - db
-      - client-db
-    restart: always
+  # api:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: license_api
+  #   volumes:
+  #     - ./app:/app/app
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     - POSTGRES_SERVER=db
+  #     - POSTGRES_PORT=5432
+  #     - CLIENT_DB_SERVER=client-db
+  #     - CLIENT_DB_PORT=5432
+  #   depends_on:
+  #     - db
+  #     - client-db
+  #   restart: always
 
   db:
     image: postgres:15

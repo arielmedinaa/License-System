@@ -1,6 +1,6 @@
 from datetime import timezone
 import uuid
-from typing import Any, List
+from typing import Any, Dict, List
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app import crud
@@ -146,6 +146,12 @@ async def deactivate_license(
     
     license = await crud.deactivate(db, id=license_id)
     return license
+
+@router.get("/types/count", response_model=Dict[str, int])
+async def get_license_types_count(
+    db: AsyncSession = Depends(get_db),
+):
+    return await crud.get_licenses_by_type(db)
 
 @router.post("/validate", response_model=LicenseResponse)
 async def validate_license(

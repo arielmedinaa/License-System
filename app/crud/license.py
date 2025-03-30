@@ -174,3 +174,22 @@ async def get_active_licenses(db: AsyncSession) -> List[License]:
         .where(License.expiration_date > now)
     )
     return result.scalars().all()
+
+async def get_licenses_by_type(db: AsyncSession) -> Dict[str, int]:
+    result = await db.execute(select(License.licencia))
+    license_types = [row[0] for row in result.all()]
+    licenses_count = {
+        "basic": 0,
+        "standard": 0,
+        "premium": 0,
+        "enterprise": 0
+    }
+    
+    for license_type in license_types:
+        license_type_lower = license_type.lower()
+        if license_type_lower in licenses_count:
+            licenses_count[license_type_lower] += 1
+        else:
+            licenses_count[license_type_lower] = 1
+    
+    return licenses_count
