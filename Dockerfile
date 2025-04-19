@@ -17,7 +17,7 @@ RUN apt-get update \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-RUN mkdir -p app/api/endpoints app/core app/crud app/db app/models app/schemas
+RUN mkdir -p app/api/endpoints app/core app/crud app/db app/models app/schemas /app/db/script/script.sql /app/app/db/script/
 
 RUN touch app/__init__.py \
     app/api/__init__.py \
