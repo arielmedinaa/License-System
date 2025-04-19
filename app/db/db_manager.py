@@ -1,9 +1,9 @@
-import asyncio
+import os
 import logging
 import secrets
 import string
 import socket
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import text
 from app.core.config import settings
@@ -35,7 +35,7 @@ class ClientDBManager:
             f"@{db_host}:{db_port}/postgres",
             isolation_level="AUTOCOMMIT",
         )
-        
+
         self.client_engines = {}
     
     @retry(
@@ -43,6 +43,7 @@ class ClientDBManager:
         wait=wait_fixed(1),
         retry=retry_if_exception_type(Exception)
     )
+    
     async def create_client_database(self, ruc: str, client_type: str) -> Dict[str, Any]:
         if client_type == "demo":
             db_name = "demo"
@@ -78,19 +79,26 @@ class ClientDBManager:
             raise
     
     async def _initialize_client_schema(self, db_name: str, table_name: str) -> None:
+        script_path = os.path.join(os.path.dirname(__file__), "script", "script.sql")
+        with open(script_path, "r", encoding="utf-8") as f:
+            script = f.read()
+        
         client_engine = create_async_engine(
             f"postgresql+asyncpg://{settings.CLIENT_DB_USER}:{settings.CLIENT_DB_PASSWORD}"
             f"@{db_host}:{db_port}/{db_name}"
         )
         
         self.client_engines[db_name] = client_engine
-        
         create_users_table_sql = UserModel.get_create_table_sql(table_name)
         
         try:
             async with client_engine.begin() as conn:
                 await conn.execute(text("CREATE EXTENSION IF NOT EXISTS pgcrypto"))
                 await conn.execute(text(create_users_table_sql))
+                for statement in script.split(";"):
+                    stmt = statement.strip()
+                    if stmt:
+                        await conn.execute(text(stmt))
                     
             logger.info(f"Esquema inicializado correctamente para {db_name}.{table_name}")
         except Exception as e:
