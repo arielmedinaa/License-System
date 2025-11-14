@@ -228,18 +228,41 @@ CREATE OR REPLACE FUNCTION verificar_uso_cliente()
 RETURNS trigger AS $$
 DECLARE
     proveedor_usado INT;
+    facturas_usado INT;
+    caja_usado INT;
 BEGIN
     SELECT COUNT(*) INTO proveedor_usado
     FROM productos
     WHERE proveedor = OLD.ruc;
 
     IF proveedor_usado > 0 THEN
-        RAISE EXCEPTION 'No se puede eliminar el cliente con RUC %, porque está siendo utilizado en productos.', OLD.ruc;
+        RAISE EXCEPTION
+            'No se puede eliminar el cliente con RUC %, porque está siendo utilizado en productos.',
+            OLD.ruc;
+    END IF;
+    SELECT COUNT(*) INTO facturas_usado
+    FROM facturas
+    WHERE ruc_cliente = OLD.ruc;
+
+    IF facturas_usado > 0 THEN
+        RAISE EXCEPTION
+            'No se puede eliminar el cliente con RUC %, porque está siendo utilizado en facturas.',
+            OLD.ruc;
+    END IF;
+    SELECT COUNT(*) INTO caja_usado
+    FROM caja_movimientos
+    WHERE ruc = OLD.ruc;
+
+    IF caja_usado > 0 THEN
+        RAISE EXCEPTION
+            'No se puede eliminar el cliente con RUC %, porque está siendo utilizado en caja.',
+            OLD.ruc;
     END IF;
 
     RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;
+
 
 
 INSERT INTO sucursales (nombre, codigo, direccion, fecha_creacion, fecha_modificacion) VALUES
