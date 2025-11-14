@@ -192,37 +192,48 @@ CREATE TABLE entradaStock (
 );
 
 ALTER TABLE caja
-ADD CONSTRAINT fk_caja_id_deposito_depositos_id FOREIGN KEY(id_deposito) REFERENCES depositos(id);
+ADD CONSTRAINT fk_caja_id_deposito_depositos_id 
+FOREIGN KEY(id_deposito) REFERENCES depositos(id) ON DELETE CASCADE;
 
 ALTER TABLE caja
-ADD CONSTRAINT fk_caja_id_sucursal_sucursales_id FOREIGN KEY(id_sucursal) REFERENCES sucursales(id);
+ADD CONSTRAINT fk_caja_id_sucursal_sucursales_id 
+FOREIGN KEY(id_sucursal) REFERENCES sucursales(id) ON DELETE CASCADE;
 
 ALTER TABLE chofer
-ADD CONSTRAINT fk_chofer_id_transportista_transportistas_id FOREIGN KEY(id_transportista) REFERENCES transportistas(id);
+ADD CONSTRAINT fk_chofer_id_transportista_transportistas_id 
+FOREIGN KEY(id_transportista) REFERENCES transportistas(id) ON DELETE CASCADE;
 
 ALTER TABLE entradadetalle
-ADD CONSTRAINT fk_entradadetalle_deposito_id_depositos_id FOREIGN KEY(deposito_id) REFERENCES depositos(id);
+ADD CONSTRAINT fk_entradadetalle_deposito_id_depositos_id 
+FOREIGN KEY(deposito_id) REFERENCES depositos(id) ON DELETE CASCADE;
 
 ALTER TABLE entradadetalle
-ADD CONSTRAINT fk_entradadetalle_producto_id_productos_id FOREIGN KEY(producto_id) REFERENCES productos(id);
+ADD CONSTRAINT fk_entradadetalle_producto_id_productos_id 
+FOREIGN KEY(producto_id) REFERENCES productos(id) ON DELETE CASCADE;
 
 ALTER TABLE entradaStock
-ADD CONSTRAINT fk_entradaStock_sucursal_id_sucursales_id FOREIGN KEY(sucursal_id) REFERENCES sucursales(id);
+ADD CONSTRAINT fk_entradaStock_sucursal_id_sucursales_id 
+FOREIGN KEY(sucursal_id) REFERENCES sucursales(id) ON DELETE CASCADE;
 
 ALTER TABLE productos
-ADD CONSTRAINT fk_productos_categoria_id_categorias_id FOREIGN KEY(categoria_id) REFERENCES categorias(id);
+ADD CONSTRAINT fk_productos_categoria_id_categorias_id 
+FOREIGN KEY(categoria_id) REFERENCES categorias(id) ON DELETE CASCADE;
 
 ALTER TABLE stock
-ADD CONSTRAINT fk_stock_deposito_id_depositos_id FOREIGN KEY(deposito_id) REFERENCES depositos(id);
+ADD CONSTRAINT fk_stock_deposito_id_depositos_id 
+FOREIGN KEY(deposito_id) REFERENCES depositos(id) ON DELETE CASCADE;
 
 ALTER TABLE stock
-ADD CONSTRAINT fk_stock_producto_id_productos_id FOREIGN KEY(producto_id) REFERENCES productos(id);
+ADD CONSTRAINT fk_stock_producto_id_productos_id 
+FOREIGN KEY(producto_id) REFERENCES productos(id) ON DELETE CASCADE;
 
 ALTER TABLE vehiculo
-ADD CONSTRAINT fk_vehiculo_id_transportista_transportistas_id FOREIGN KEY(id_transportista) REFERENCES transportistas(id);
+ADD CONSTRAINT fk_vehiculo_id_transportista_transportistas_id 
+FOREIGN KEY(id_transportista) REFERENCES transportistas(id) ON DELETE CASCADE;
 
 ALTER TABLE transferenciadepDetalle
-ADD CONSTRAINT fk_transferenciadepDetalle_producto_id_productos_id FOREIGN KEY(producto_id) REFERENCES productos(id);
+ADD CONSTRAINT fk_transferenciadepDetalle_producto_id_productos_id 
+FOREIGN KEY(producto_id) REFERENCES productos(id) ON DELETE CASCADE;
 
 CREATE OR REPLACE FUNCTION verificar_uso_cliente()
 RETURNS trigger AS $$
