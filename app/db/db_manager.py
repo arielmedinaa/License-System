@@ -95,15 +95,65 @@ class ClientDBManager:
             async with client_engine.begin() as conn:
                 await conn.execute(text("CREATE EXTENSION IF NOT EXISTS pgcrypto"))
                 await conn.execute(text(create_users_table_sql))
-                for statement in script.split(";"):
-                    stmt = statement.strip()
-                    if stmt:
+                statements = self._parse_sql_statements(script)
+                for stmt in statements:
+                    if stmt.strip():
                         await conn.execute(text(stmt))
                     
             logger.info(f"Esquema inicializado correctamente para {db_name}.{table_name}")
         except Exception as e:
             logger.error(f"Error inicializando esquema para {db_name}.{table_name}: {e}")
             raise
+    
+    def _parse_sql_statements(self, script: str) -> list:
+        statements = []
+        current_statement = ""
+        in_dollar_quote = False
+        dollar_tag = ""
+        i = 0
+        
+        while i < len(script):
+            char = script[i]
+            current_statement += char
+            if char == '$' and not in_dollar_quote:
+                tag_start = i + 1
+                tag_end = tag_start
+                while tag_end < len(script) and script[tag_end] != '$':
+                    tag_end += 1
+                
+                if tag_end < len(script):
+                    dollar_tag = script[tag_start:tag_end]
+                    in_dollar_quote = True
+                    current_statement += script[tag_start:tag_end + 1]
+                    i = tag_end + 1
+                    continue
+            
+            elif char == '$' and in_dollar_quote:
+                tag_start = i + 1
+                tag_end = tag_start + len(dollar_tag)
+                if (tag_end < len(script) and 
+                    script[tag_start:tag_end] == dollar_tag and 
+                    tag_end < len(script) and 
+                    script[tag_end] == '$'):
+                    current_statement += script[tag_start:tag_end + 1]
+                    in_dollar_quote = False
+                    dollar_tag = ""
+                    i = tag_end + 1
+                    continue
+            
+            elif char == ';' and not in_dollar_quote:
+                stmt = current_statement.strip()
+                if stmt:
+                    statements.append(stmt)
+                current_statement = ""
+            
+            i += 1
+        
+        stmt = current_statement.strip()
+        if stmt:
+            statements.append(stmt)
+        
+        return statements
     
     async def get_client_engine(self, db_name: str):
         if db_name not in self.client_engines:
