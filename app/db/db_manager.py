@@ -9,8 +9,28 @@ from sqlalchemy import text
 from app.core.config import settings
 from app.models.user import UserModel
 from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
+from passlib.context import CryptContext
 
 logger = logging.getLogger(__name__)
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# --------------------------
+#  UTILIDADES DE PASSWORD
+# --------------------------
+
+def truncate_password(password: str) -> str:
+    """
+    Bcrypt solo permite 72 bytes.
+    Truncamos silenciosamente el exceso.
+    """
+    return password.encode("utf-8")[:72].decode("utf-8", errors="ignore")
+
+def hash_password(password: str) -> str:
+    password = truncate_password(password)
+    return pwd_context.hash(password)
+
+# --------------------------
 
 def generate_password(length=12):
     alphabet = string.ascii_letters + string.digits
@@ -166,7 +186,15 @@ class ClientDBManager:
     
     async def create_admin_user(self, db_name: str, table_name: str, user_data: dict) -> bool:
         engine = await self.get_client_engine(db_name)
-        
+
+        # -----------------------------
+        #  🔥 FIX CRÍTICO AQUÍ
+        # -----------------------------
+        # Hash + truncate del password
+        if "password" in user_data:
+            user_data["password"] = hash_password(user_data["password"])
+        # -----------------------------
+
         insert_query = f"""
         INSERT INTO {table_name} (
             nombre, email, phone, "isActive", address, age, password, role
@@ -177,10 +205,7 @@ class ClientDBManager:
         
         try:
             async with engine.begin() as conn:
-                result = await conn.execute(
-                    text(insert_query),
-                    user_data
-                )
+                result = await conn.execute(text(insert_query), user_data)
                 user_id = result.scalar()
                 logger.info(f"Usuario administrador creado con ID: {user_id}")
                 return True

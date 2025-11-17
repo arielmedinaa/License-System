@@ -15,6 +15,12 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
+
+RUN pip install --no-cache-dir --upgrade pip
+
+RUN pip install --no-cache-dir bcrypt==4.0.1
+RUN pip install --no-cache-dir "passlib[bcrypt]"
+
 RUN pip install --no-cache-dir -r requirements.txt
 
 RUN mkdir -p app/api/endpoints app/core app/crud app/db app/models app/schemas /app/db/script/script.sql /app/app/db/script/
