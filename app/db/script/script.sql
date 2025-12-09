@@ -161,15 +161,18 @@ CREATE TABLE categorias (
 );
 
 CREATE TABLE precios (
-    id SERIAL,
-    producto_id integer NOT NULL,
-    precio integer NOT NULL,
-    activo boolean NOT NULL,
-    iva bigint NOT NULL,
-    tipo_precio varchar,
-    moneda text NOT NULL,
-    fecha_creacion timestamp NOT NULL,
-    PRIMARY KEY (id)
+    id INTEGER NOT NULL,
+    linea INTEGER NOT NULL,
+    producto_id INTEGER NOT NULL,
+    precio INTEGER NOT NULL,
+    activo BOOLEAN NOT NULL,
+    iva BIGINT NOT NULL,
+    tipo_precio VARCHAR,
+    moneda TEXT NOT NULL,
+    fecha_creacion TIMESTAMP NOT NULL,
+
+    PRIMARY KEY (id, linea),
+    CONSTRAINT unico_precio_activo UNIQUE (id, activo)
 );
 
 CREATE TABLE transferenciasDepositos (
