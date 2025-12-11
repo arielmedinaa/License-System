@@ -154,9 +154,11 @@ CREATE TABLE clienteproveedor (
 
 CREATE TABLE categorias (
     id SERIAL,
-    nombre_categoria text NOT NULL UNIQUE,
-    codigo_categoria text UNIQUE,
-    fecha_creacion timestamp NOT NULL,
+    nombreCategoria text NOT NULL UNIQUE,
+    codigoCategoria text UNIQUE,
+    fechaCreacion timestamp NOT NULL,
+    activo boolean NOT NULL default true,
+    subcategoriaId integer NOT NULL default 0,
     PRIMARY KEY (id)
 );
 
@@ -170,10 +172,12 @@ CREATE TABLE precios (
     tipo_precio VARCHAR,
     moneda TEXT NOT NULL,
     fecha_creacion TIMESTAMP NOT NULL,
-
-    PRIMARY KEY (id, linea),
-    CONSTRAINT unico_precio_activo UNIQUE (id, activo)
+    PRIMARY KEY (id, linea)
 );
+
+CREATE UNIQUE INDEX unico_precio_activo_por_producto_id
+ON precios (producto_id)
+WHERE activo = true;
 
 CREATE TABLE transferenciasDepositos (
     id SERIAL,
@@ -449,6 +453,22 @@ ALTER TABLE transferenciadepDetalle
 ADD CONSTRAINT fk_transferenciadepDetalle_producto_id_productos_id 
 FOREIGN KEY(producto_id) REFERENCES productos(id) ON DELETE CASCADE;
 
+ALTER TABLE entrada_stock_detalle DROP CONSTRAINT entrada_stock_detalle_pkey;
+
+ALTER TABLE entrada_stock_detalle
+    ADD CONSTRAINT entrada_stock_detalle_pkey
+    PRIMARY KEY (entrada_id, linea);
+
+ALTER TABLE stock DROP CONSTRAINT stock_pkey;
+
+ALTER TABLE stock
+ADD PRIMARY KEY (id, origen, linea);
+
+ALTER TABLE transferenciadepDetalle DROP CONSTRAINT transferenciadepdetalle_pkey;
+
+ALTER TABLE transferenciadepDetalle
+ADD PRIMARY KEY (id, linea);
+
 --TRIGGERS
 CREATE OR REPLACE FUNCTION verificar_uso_cliente()
 RETURNS trigger AS $$
@@ -687,7 +707,7 @@ INSERT INTO depositos (codigo, nombre_deposito, direccion_deposito, telefono, fe
 (102, 'Depósito Secundario', 'Zona Industrial B-34', '021-555-2000', CURRENT_TIMESTAMP),
 (103, 'Depósito Auxiliar', 'Zona Industrial C-56', '021-555-3000', CURRENT_TIMESTAMP);
 
-INSERT INTO categorias (nombre_categoria, codigo_categoria, fecha_creacion) VALUES
-('Electrónicos', 'CAT-E', CURRENT_TIMESTAMP),
-('Hogar', 'CAT-H', CURRENT_TIMESTAMP),
-('Oficina', 'CAT-O', CURRENT_TIMESTAMP);
+INSERT INTO categorias (nombreCategoria, codigoCategoria, activo, fechaCreacion) VALUES
+('Electrónicos', 'CAT-E', true, CURRENT_TIMESTAMP),
+('Hogar', 'CAT-H', true, CURRENT_TIMESTAMP),
+('Oficina', 'CAT-O', true, CURRENT_TIMESTAMP);
